@@ -1,0 +1,32 @@
+[project]
+name = "wt-video-cal"
+version = "0.1.0"
+description = "短视频团队提成计算系统"
+requires-python = ">=3.11"
+dependencies = ["openpyxl>=3.1.0"]
+
+[dependency-groups]
+dev = ["pytest>=8.0", "ruff>=0.8.0", "pyright>=1.1.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wt_video_cal"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

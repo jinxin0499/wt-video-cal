@@ -1,0 +1,95 @@
+[profit_margins]
+default = 0.30
+
+[[profit_margins.rules]]
+pattern = "5000"
+margin = 0.15
+description = "5000mAh充电宝"
+
+[accounts.artcyber6]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.digital_goodies_us]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.shshszaq]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.user4816350997724]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.sparkkit0]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.user6358855107876]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.qryzhxv]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.xehadshx]
+region = "美国"
+manager = "刘龙海"
+
+[accounts.user596127913583300]
+region = "美国"
+manager = "刘龙海"
+
+[accounts.rei_ayanami764]
+region = "美国"
+manager = "刘龙海"
+
+[accounts.c07d569f]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.user9120702396325]
+region = "美国"
+manager = "刘龙海"
+
+[accounts.reneeiio]
+region = "美国"
+manager = "刘龙海"
+
+[accounts.zenovauk]
+region = "英国"
+manager = "刘龙海"
+
+[accounts.clickgotech]
+region = "英国"
+manager = "刘龙海"
+
+[accounts.waynemcmurray1]
+region = "英国"
+manager = "刘龙海"
+
+[accounts.noos89593]
+region = "英国"
+manager = "古嘉垚"
+
+[accounts.user608420707]
+region = "英国"
+manager = "古嘉垚"
+
+[accounts.nova84331]
+region = "英国"
+manager = "古嘉垚"
+
+[accounts."lvy.mira1"]
+region = "美国"
+manager = "刘龙海"
+
+[accounts."lebu.karin"]
+region = "美国"
+manager = "刘龙海"
+
+[accounts.acaccessory0]
+region = "美国"
+manager = "古嘉垚"
