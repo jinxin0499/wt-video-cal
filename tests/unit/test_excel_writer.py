@@ -116,6 +116,76 @@ class TestWriteOverviewReport:
         assert len(rows) == 3
 
 
+    def test_analysis_sheet_exists(self, tmp_path: Path) -> None:
+        ms = _make_manager_summary()
+        path = write_manager_report(ms, tmp_path, "2026-01")
+        wb = load_workbook(path)
+        assert "分析" in wb.sheetnames
+
+    def test_analysis_sheet_no_manager_column(self, tmp_path: Path) -> None:
+        ms = _make_manager_summary()
+        path = write_manager_report(ms, tmp_path, "2026-01")
+        wb = load_workbook(path)
+        ws = wb["分析"]
+        # Find "账号业绩排名" section and check it has no "负责人" column
+        for row in ws.iter_rows(values_only=True):
+            if row[0] == "账号业绩排名":
+                # Next row is the header
+                break
+        # Read the header row after the section title
+        found_section = False
+        for row in ws.iter_rows(values_only=True):
+            values = list(row)
+            if values[0] == "账号业绩排名":
+                found_section = True
+                continue
+            if found_section:
+                # This is the header row
+                assert "负责人" not in values
+                break
+
+    def test_analysis_section_titles(self, tmp_path: Path) -> None:
+        ms = _make_manager_summary()
+        path = write_manager_report(ms, tmp_path, "2026-01")
+        wb = load_workbook(path)
+        ws = wb["分析"]
+        section_titles = set()
+        for row in ws.iter_rows(values_only=True):
+            val = row[0]
+            if isinstance(val, str) and val in {
+                "Top 10 视频 — 按订单数", "Top 10 视频 — 按GMV(CNY)",
+                "Top 10 商品 — 按销量", "Top 10 商品 — 按GMV(CNY)",
+                "账号业绩排名", "区域分布", "利润率分布",
+            }:
+                section_titles.add(val)
+        assert len(section_titles) == 7
+
+
+class TestWriteOverviewAnalysis:
+    def test_analysis_sheet_exists(self, tmp_path: Path) -> None:
+        ms = _make_manager_summary()
+        managers = {"张三": ms}
+        path = write_overview_report(managers, tmp_path, "2026-01")
+        wb = load_workbook(path)
+        assert "分析" in wb.sheetnames
+
+    def test_analysis_sheet_has_manager_column(self, tmp_path: Path) -> None:
+        ms = _make_manager_summary()
+        managers = {"张三": ms}
+        path = write_overview_report(managers, tmp_path, "2026-01")
+        wb = load_workbook(path)
+        ws = wb["分析"]
+        found_section = False
+        for row in ws.iter_rows(values_only=True):
+            values = list(row)
+            if values[0] == "账号业绩排名":
+                found_section = True
+                continue
+            if found_section:
+                assert "负责人" in values
+                break
+
+
 class TestWriteAllReports:
     def test_generates_all_files(self, tmp_path: Path) -> None:
         ms = _make_manager_summary()

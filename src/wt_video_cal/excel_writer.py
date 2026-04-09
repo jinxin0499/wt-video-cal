@@ -7,6 +7,12 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
+from wt_video_cal.analysis import (
+    AnalysisResult,
+    compute_analysis,
+    extract_all_details,
+    extract_manager_details,
+)
 from wt_video_cal.models import AccountSummary, ManagerSummary
 from wt_video_cal.settings import REPORT_MONTH
 
@@ -18,6 +24,8 @@ _TOTAL_FONT = Font(bold=True, color="C00000")
 _TOTAL_FILL = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
 _ALIGN_RIGHT = Alignment(horizontal="right")
 _ALIGN_CENTER = Alignment(horizontal="center")
+_SECTION_FONT = Font(bold=True, size=12)
+_SECTION_FILL = PatternFill(start_color="B4C6E7", end_color="B4C6E7", fill_type="solid")
 
 
 def _fmt(value: Decimal) -> float:
@@ -87,6 +95,156 @@ def _get_account_currency_info(
     # 多币种：按GMV金额取主币种，标记"*"
     primary = max(currency_gmv, key=lambda c: currency_gmv[c])
     return primary + "*", currency_rate[primary], sum(currency_gmv.values())
+
+
+def _write_section_title(ws: object, row: int, title: str, col_span: int) -> None:
+    """写入合并单元格的区域标题。"""
+    cell = ws.cell(row=row, column=1)  # type: ignore[union-attr]
+    cell.value = title
+    cell.font = _SECTION_FONT
+    cell.fill = _SECTION_FILL
+    cell.alignment = Alignment(horizontal="left")
+    if col_span > 1:
+        ws.merge_cells(  # type: ignore[union-attr]
+            start_row=row, start_column=1, end_row=row, end_column=col_span,
+        )
+
+
+def _write_analysis_table(
+    ws: object,
+    start_row: int,
+    section_title: str,
+    headers: list[str],
+    rows: list[list[object]],
+) -> int:
+    """写入一个分析表（标题+表头+数据行），返回下一个可用行号。"""
+    col_count = len(headers)
+
+    # 区域标题
+    _write_section_title(ws, start_row, section_title, col_count)
+    start_row += 1
+
+    # 表头
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=start_row, column=col)  # type: ignore[union-attr]
+        cell.value = h
+    _style_header(ws, start_row, col_count)
+    start_row += 1
+
+    # 数据行
+    for row_data in rows:
+        for col, val in enumerate(row_data, 1):
+            ws.cell(row=start_row, column=col).value = val  # type: ignore[union-attr]
+        start_row += 1
+
+    # 空行间隔
+    return start_row + 1
+
+
+def _write_analysis_sheet(
+    ws: object,
+    analysis: AnalysisResult,
+    *,
+    include_manager_column: bool = True,
+) -> None:
+    """写入完整的分析 sheet。"""
+    row = 1
+
+    # --- 1. Top 10 视频 — 按订单数 ---
+    video_headers = ["排名", "视频ID", "商品", "账号", "订单数", "成交件数", "GMV(CNY)"]
+    video_rows_orders = [
+        [v.rank, v.video_id, v.product_name, v.account, v.orders, v.items_sold, _fmt(v.gmv_cny)]
+        for v in analysis.top_videos_by_orders
+    ]
+    row = _write_analysis_table(ws, row, "Top 10 视频 — 按订单数", video_headers, video_rows_orders)
+
+    # --- 2. Top 10 视频 — 按GMV(CNY) ---
+    video_rows_gmv = [
+        [v.rank, v.video_id, v.product_name, v.account, v.orders, v.items_sold, _fmt(v.gmv_cny)]
+        for v in analysis.top_videos_by_gmv
+    ]
+    row = _write_analysis_table(ws, row, "Top 10 视频 — 按GMV(CNY)", video_headers, video_rows_gmv)
+
+    # --- 3. Top 10 商品 — 按销量 ---
+    product_headers = ["排名", "商品", "订单数", "成交件数", "GMV(CNY)", "占比(件数)", "占比(GMV)"]
+    product_rows_items = [
+        [
+            p.rank, p.product_name, p.orders, p.items_sold, _fmt(p.gmv_cny),
+            f"{_fmt(p.items_pct)}%", f"{_fmt(p.gmv_pct)}%",
+        ]
+        for p in analysis.top_products_by_items
+    ]
+    row = _write_analysis_table(
+        ws, row, "Top 10 商品 — 按销量", product_headers, product_rows_items,
+    )
+
+    # --- 4. Top 10 商品 — 按GMV(CNY) ---
+    product_rows_gmv = [
+        [
+            p.rank, p.product_name, p.orders, p.items_sold, _fmt(p.gmv_cny),
+            f"{_fmt(p.items_pct)}%", f"{_fmt(p.gmv_pct)}%",
+        ]
+        for p in analysis.top_products_by_gmv
+    ]
+    row = _write_analysis_table(
+        ws, row, "Top 10 商品 — 按GMV(CNY)", product_headers, product_rows_gmv,
+    )
+
+    # --- 5. 账号业绩排名 ---
+    if include_manager_column:
+        acct_headers = [
+            "排名", "账号", "负责人", "区域", "订单数",
+            "成交件数", "GMV(CNY)", "提成(CNY)", "客单价(CNY)",
+        ]
+        acct_rows = [
+            [
+                a.rank, a.account, a.manager, a.region, a.orders, a.items_sold,
+                _fmt(a.gmv_cny), _fmt(a.commission), _fmt(a.unit_price),
+            ]
+            for a in analysis.account_rankings
+        ]
+    else:
+        acct_headers = [
+            "排名", "账号", "区域", "订单数", "成交件数",
+            "GMV(CNY)", "提成(CNY)", "客单价(CNY)",
+        ]
+        acct_rows = [
+            [
+                a.rank, a.account, a.region, a.orders, a.items_sold,
+                _fmt(a.gmv_cny), _fmt(a.commission), _fmt(a.unit_price),
+            ]
+            for a in analysis.account_rankings
+        ]
+    row = _write_analysis_table(ws, row, "账号业绩排名", acct_headers, acct_rows)
+
+    # --- 6. 区域分布 ---
+    region_headers = ["区域", "账号数", "订单数", "成交件数", "GMV(CNY)", "提成(CNY)", "GMV占比"]
+    region_rows = [
+        [
+            r.region, r.account_count, r.orders, r.items_sold,
+            _fmt(r.gmv_cny), _fmt(r.commission), f"{_fmt(r.gmv_pct)}%",
+        ]
+        for r in analysis.region_breakdown
+    ]
+    row = _write_analysis_table(ws, row, "区域分布", region_headers, region_rows)
+
+    # --- 7. 利润率分布 ---
+    margin_headers = ["利润率", "商品数", "订单数", "成交件数", "GMV(CNY)", "GMV占比"]
+    margin_rows = [
+        [
+            m.margin, m.product_count, m.orders, m.items_sold,
+            _fmt(m.gmv_cny), f"{_fmt(m.gmv_pct)}%",
+        ]
+        for m in analysis.margin_distribution
+    ]
+    _write_analysis_table(ws, row, "利润率分布", margin_headers, margin_rows)
+
+    # 自动列宽 — 使用最大列数
+    max_cols = max(
+        len(video_headers), len(product_headers),
+        len(acct_headers), len(region_headers), len(margin_headers),
+    )
+    _auto_width(ws, max_cols)
 
 
 def write_manager_report(
@@ -163,6 +321,12 @@ def write_manager_report(
             ])
 
     _auto_width(ws_detail, len(detail_headers))
+
+    # === Sheet 3: 分析 ===
+    ws_analysis = wb.create_sheet("分析")
+    mgr_details = extract_manager_details(manager_summary)
+    analysis = compute_analysis(mgr_details)
+    _write_analysis_sheet(ws_analysis, analysis, include_manager_column=False)
 
     # 保存
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -292,6 +456,12 @@ def write_overview_report(
         ])
 
         _auto_width(ws_verify, len(verify_headers))
+
+    # === Sheet: 分析 ===
+    ws_analysis = wb.create_sheet("分析")
+    all_details = extract_all_details(managers)
+    analysis = compute_analysis(all_details)
+    _write_analysis_sheet(ws_analysis, analysis, include_manager_column=True)
 
     # 保存
     output_dir.mkdir(parents=True, exist_ok=True)

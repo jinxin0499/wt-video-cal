@@ -9,3 +9,52 @@ build/
 .pyright/
 data/
 output/
+
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+*.env
+!.env.example
+!.env.local.example
+
+# Local database / runtime files
+*.sqlite3
+*.db
+storage/
+./storage/
+tmp/
+logs/
+
+# Build artifacts
+dist/
+build/
+
+# IDE local files
+.idea/
+.vscode/*.log
