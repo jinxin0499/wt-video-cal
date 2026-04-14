@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from wt_video_cal.aggregator import aggregate
+from wt_video_cal.aggregator import aggregate, apply_manager_gmv_adjustments
+from wt_video_cal.config import AccountInfo, AppConfig
 from wt_video_cal.models import CommissionResult, Currency, VideoRecord
 
 
@@ -88,3 +89,35 @@ class TestAggregate:
         acct = managers["张三"].accounts["acct1"]
         assert len(acct.details) == 1
         assert acct.details[0].record.video_id == "v1"
+
+    def test_apply_manager_gmv_adjustments(self) -> None:
+        results = [
+            _make_result("acct1", "v1", "张三", "美国", "725", "217.50", "10.88", 5, 6),
+            _make_result("acct2", "v2", "李四", "英国", "920", "276", "13.80", 3, 4),
+        ]
+        managers = aggregate(results)
+        config = AppConfig(
+            default_profit_margin=Decimal("0.30"),
+            profit_rules=[],
+            accounts={
+                "acct1": AccountInfo(region="美国", manager="张三"),
+                "acct2": AccountInfo(region="英国", manager="李四"),
+            },
+            manager_monthly_gmv_usd={"2026-01": {"张三": Decimal("150.00")}},
+        )
+
+        apply_manager_gmv_adjustments(
+            managers,
+            config,
+            "2026-01",
+            exchange_rate_usd=Decimal("7.25"),
+            commission_rate=Decimal("0.05"),
+        )
+
+        assert managers["张三"].creator_side_gmv_usd == Decimal("150.00")
+        assert managers["张三"].gmv_diff_usd == Decimal("50.00")
+        assert managers["张三"].adjustment_commission_cny == Decimal("5.44")
+        assert managers["张三"].total_commission_with_adjustment == Decimal("16.32")
+        assert managers["李四"].creator_side_gmv_usd is None
+        assert managers["李四"].gmv_diff_usd is None
+        assert managers["李四"].adjustment_commission_cny == Decimal("0")

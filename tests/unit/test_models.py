@@ -17,12 +17,17 @@ class TestCurrency:
     def test_gbp(self) -> None:
         assert Currency.GBP.value == "GBP"
 
+    def test_jpy(self) -> None:
+        assert Currency.JPY.value == "JPY"
+
 
 class TestExcelFormat:
     def test_formats(self) -> None:
         assert ExcelFormat.CHINESE_USD.value == "chinese_usd"
+        assert ExcelFormat.CHINESE_JPY.value == "chinese_jpy"
         assert ExcelFormat.ENGLISH_USD.value == "english_usd"
         assert ExcelFormat.ENGLISH_GBP.value == "english_gbp"
+        assert ExcelFormat.ENGLISH_JPY.value == "english_jpy"
 
 
 class TestVideoRecord:
@@ -39,6 +44,7 @@ class TestVideoRecord:
         )
         assert record.creator_name == "test_user"
         assert record.attributed_gmv == Decimal("100.50")
+        assert record.video_gmv == Decimal("0")
         assert record.currency == Currency.USD
 
     def test_frozen(self) -> None:
@@ -98,3 +104,7 @@ class TestManagerSummary:
         summary = ManagerSummary(manager="张三")
         assert summary.total_orders == 0
         assert summary.accounts == {}
+        assert summary.creator_side_gmv_usd is None
+        assert summary.gmv_diff_usd is None
+        assert summary.adjustment_commission_cny == Decimal("0")
+        assert summary.total_commission_with_adjustment == Decimal("0")

@@ -1,6 +1,7 @@
 import logging
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from typing import cast
 
 from openpyxl import load_workbook
 
@@ -12,13 +13,46 @@ logger = logging.getLogger(__name__)
 # 用于识别表头行的关键词
 _HEADER_MARKERS = {"达人昵称", "Creator name"}
 
+
+def _matches_header(actual: str, expected: str | tuple[str, ...]) -> bool:
+    if isinstance(expected, tuple):
+        return actual in expected
+    return actual == expected
+
+
+def _header_label(expected: str | tuple[str, ...]) -> str:
+    if isinstance(expected, tuple):
+        return " / ".join(expected)
+    return expected
+
+
 # 各格式的表头关键字段映射
-_FORMAT_COLUMNS: dict[ExcelFormat, dict[str, str]] = {
+_FORMAT_COLUMNS: dict[ExcelFormat, dict[str, str | tuple[str, ...]]] = {
     ExcelFormat.CHINESE_USD: {
         "creator_name": "达人昵称",
         "video_id": "视频ID",
         "product_name": "商品",
+        "video_gmv": "GMV（视频） ($)",
         "attributed_gmv": "归因于带货视频的 GMV ($)",
+        "orders": "视频成交订单数",
+        "items_sold": "视频商品成交件数",
+    },
+    ExcelFormat.CHINESE_JPY: {
+        "creator_name": "达人昵称",
+        "video_id": "视频ID",
+        "product_name": "商品",
+        "video_gmv": (
+            "GMV（视频） (円)",
+            "GMV（视频） (¥)",
+            "GMV（视频） (￥)",
+            "GMV（视频） (JPY)",
+        ),
+        "attributed_gmv": (
+            "归因于带货视频的 GMV (円)",
+            "归因于带货视频的 GMV (¥)",
+            "归因于带货视频的 GMV (￥)",
+            "归因于带货视频的 GMV (JPY)",
+        ),
         "orders": "视频成交订单数",
         "items_sold": "视频商品成交件数",
     },
@@ -26,6 +60,7 @@ _FORMAT_COLUMNS: dict[ExcelFormat, dict[str, str]] = {
         "creator_name": "Creator name",
         "video_id": "Video ID",
         "product_name": "Products",
+        "video_gmv": "Gross merchandise value (Video) ($)",
         "attributed_gmv": "Shoppable video attributed GMV ($)",
         "orders": "Orders",
         "items_sold": "Video items sold",
@@ -34,7 +69,25 @@ _FORMAT_COLUMNS: dict[ExcelFormat, dict[str, str]] = {
         "creator_name": "Creator name",
         "video_id": "Video ID",
         "product_name": "Products",
+        "video_gmv": "Gross merchandise value (Video) (£)",
         "attributed_gmv": "Shoppable video attributed GMV (£)",
+        "orders": "Orders",
+        "items_sold": "Video items sold",
+    },
+    ExcelFormat.ENGLISH_JPY: {
+        "creator_name": "Creator name",
+        "video_id": "Video ID",
+        "product_name": "Products",
+        "video_gmv": (
+            "Gross merchandise value (Video) (¥)",
+            "Gross merchandise value (Video) (￥)",
+            "Gross merchandise value (Video) (JPY)",
+        ),
+        "attributed_gmv": (
+            "Shoppable video attributed GMV (¥)",
+            "Shoppable video attributed GMV (￥)",
+            "Shoppable video attributed GMV (JPY)",
+        ),
         "orders": "Orders",
         "items_sold": "Video items sold",
     },
@@ -49,6 +102,21 @@ def _is_header_row(row: tuple[object, ...]) -> bool:
     return False
 
 
+def _is_empty_export(rows: list[tuple[object, ...]]) -> bool:
+    """识别仅含日期范围、没有表头和数据的空导出。"""
+    non_empty_rows = []
+    for row in rows:
+        values = [str(cell).strip() for cell in row if cell not in (None, "")]
+        if values:
+            non_empty_rows.append(values)
+
+    if len(non_empty_rows) != 1:
+        return False
+
+    first_cell = non_empty_rows[0][0]
+    return first_cell.startswith("[日期范围]:") or first_cell.startswith("[Date Range]:")
+
+
 def _load_rows(file_path: Path) -> list[tuple[object, ...]]:
     """加载 Excel 行数据。优先 read_only 模式，若结果异常则回退到普通模式。"""
     wb = load_workbook(file_path, read_only=True, data_only=True)
@@ -56,24 +124,23 @@ def _load_rows(file_path: Path) -> list[tuple[object, ...]]:
     if ws is None:
         wb.close()
         return []
-    rows = list(ws.iter_rows(values_only=True))
+    rows = cast(list[tuple[object, ...]], list(ws.iter_rows(values_only=True)))
     wb.close()
 
-    # 某些 TikTok 导出文件使用 inline string (t="str")，read_only 模式无法正确解析
-    # 表现为行数极少但文件体积较大，此时回退到普通模式重新读取
-    if len(rows) <= 5 and file_path.stat().st_size > 10_000:
+    # 某些 TikTok 导出文件使用 inline string (t="str")，read_only 模式无法正确解析。
+    # 实际表现通常是只读到日期范围等极少行，因此当行数异常少时直接回退普通模式重读。
+    if len(rows) <= 5:
         logger.debug(
-            "[%s] read_only 模式仅读到 %d 行（文件 %dKB），回退到普通模式",
+            "[%s] read_only 模式仅读到 %d 行，回退到普通模式",
             file_path.name,
             len(rows),
-            file_path.stat().st_size // 1024,
         )
         wb = load_workbook(file_path, read_only=False, data_only=True)
         ws = wb.active
         if ws is None:
             wb.close()
             return []
-        rows = list(ws.iter_rows(values_only=True))
+        rows = cast(list[tuple[object, ...]], list(ws.iter_rows(values_only=True)))
         wb.close()
         logger.debug("[%s] 普通模式读到 %d 行", file_path.name, len(rows))
 
@@ -85,13 +152,20 @@ def detect_format(header_row: list[str]) -> ExcelFormat:
     headers_str = "\t".join(header_row)
 
     if "达人昵称" in headers_str:
+        for h in header_row:
+            if "GMV (円)" in h or "GMV（视频） (円)" in h or "GMV (JPY)" in h:
+                return ExcelFormat.CHINESE_JPY
+            if "GMV (¥)" in h or "GMV (￥)" in h:
+                return ExcelFormat.CHINESE_JPY
         return ExcelFormat.CHINESE_USD
 
     if "Creator name" in headers_str:
-        # 区分美区和英区
+        # 区分美区、英区、日区
         for h in header_row:
             if "GMV (£)" in h or "GMV (£)" in h:
                 return ExcelFormat.ENGLISH_GBP
+            if "GMV (¥)" in h or "GMV (￥)" in h or "GMV (JPY)" in h:
+                return ExcelFormat.ENGLISH_JPY
             if "GMV ($)" in h:
                 return ExcelFormat.ENGLISH_USD
         return ExcelFormat.ENGLISH_USD
@@ -126,9 +200,7 @@ def read_excel_file(file_path: Path) -> list[VideoRecord]:
     """
     rows = _load_rows(file_path)
     if not rows:
-        raise UnknownFormatError(
-            f"[{file_path.name}] 文件无内容或无活动工作表"
-        )
+        raise UnknownFormatError(f"[{file_path.name}] 文件无内容或无活动工作表")
 
     logger.debug("[%s] 共读取 %d 行原始数据", file_path.name, len(rows))
 
@@ -140,6 +212,9 @@ def read_excel_file(file_path: Path) -> list[VideoRecord]:
             break
 
     if header_idx is None:
+        if _is_empty_export(rows):
+            logger.info("[%s] 识别为空导出文件，跳过", file_path.name)
+            return []
         preview_lines = []
         for i, row in enumerate(rows[:5]):
             cells = [str(c) if c is not None else "(空)" for c in row[:5]]
@@ -154,7 +229,12 @@ def read_excel_file(file_path: Path) -> list[VideoRecord]:
     logger.debug("[%s] 表头在第 %d 行: %s", file_path.name, header_idx + 1, header_row[:6])
 
     fmt = detect_format(header_row)
-    currency = Currency.GBP if fmt == ExcelFormat.ENGLISH_GBP else Currency.USD
+    if fmt == ExcelFormat.ENGLISH_GBP:
+        currency = Currency.GBP
+    elif fmt in {ExcelFormat.ENGLISH_JPY, ExcelFormat.CHINESE_JPY}:
+        currency = Currency.JPY
+    else:
+        currency = Currency.USD
 
     col_map = _FORMAT_COLUMNS[fmt]
 
@@ -162,20 +242,23 @@ def read_excel_file(file_path: Path) -> list[VideoRecord]:
     col_indices: dict[str, int] = {}
     for field_name, col_header in col_map.items():
         for i, h in enumerate(header_row):
-            if h == col_header.strip():
+            if _matches_header(h, col_header):
                 col_indices[field_name] = i
                 break
         else:
-            logger.warning("[%s] 未找到列 '%s'，将使用默认值", file_path.name, col_header)
+            logger.warning(
+                "[%s] 未找到列 '%s'，将使用默认值",
+                file_path.name,
+                _header_label(col_header),
+            )
 
     if "creator_name" not in col_indices or "video_id" not in col_indices:
-        raise UnknownFormatError(
-            f"[{file_path.name}] 缺少必要列（creator_name 或 video_id）"
-        )
+        raise UnknownFormatError(f"[{file_path.name}] 缺少必要列（creator_name 或 video_id）")
 
     creator_idx = col_indices["creator_name"]
     video_idx = col_indices["video_id"]
     product_idx = col_indices.get("product_name")
+    video_gmv_idx = col_indices.get("video_gmv")
     gmv_idx = col_indices.get("attributed_gmv")
     orders_idx = col_indices.get("orders")
     items_idx = col_indices.get("items_sold")
@@ -197,9 +280,10 @@ def read_excel_file(file_path: Path) -> list[VideoRecord]:
             continue
 
         product_name = (
-            str(row[product_idx]).strip()
-            if product_idx is not None and row[product_idx]
-            else ""
+            str(row[product_idx]).strip() if product_idx is not None and row[product_idx] else ""
+        )
+        video_gmv = (
+            _parse_decimal(row[video_gmv_idx]) if video_gmv_idx is not None else Decimal("0")
         )
         attributed_gmv = _parse_decimal(row[gmv_idx]) if gmv_idx is not None else Decimal("0")
         orders = _parse_int(row[orders_idx]) if orders_idx is not None else 0
@@ -215,6 +299,7 @@ def read_excel_file(file_path: Path) -> list[VideoRecord]:
                 items_sold=items_sold,
                 currency=currency,
                 source_file=str(file_path),
+                video_gmv=video_gmv,
             )
         )
 

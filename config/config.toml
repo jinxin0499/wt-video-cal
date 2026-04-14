@@ -4,6 +4,7 @@ default = 0.30
 [[profit_margins.rules]]
 pattern = "5000"
 margin = 0.15
+max_unit_price_cny = 110
 description = "5000mAh充电宝"
 
 [accounts.artcyber6]
@@ -78,6 +79,10 @@ manager = "古嘉垚"
 region = "英国"
 manager = "古嘉垚"
 
+[accounts.sienna8863]
+region = "英国"
+manager = "古嘉垚"
+
 [accounts.nova84331]
 region = "英国"
 manager = "古嘉垚"
@@ -93,3 +98,37 @@ manager = "刘龙海"
 [accounts.acaccessory0]
 region = "美国"
 manager = "古嘉垚"
+
+[accounts.lebukarin]
+region = "美国"
+manager = "刘龙海"
+
+[accounts.ac_dailytech]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.miraoncam1]
+region = "美国"
+manager = "古嘉垚"
+
+[accounts.ribbondiy2]
+region = "日本"
+manager = "古嘉垚"
+
+[accounts.user7910470860785]
+region = "日本"
+manager = "刘龙海"
+
+[accounts.ayachan0122]
+region = "日本"
+manager = "刘龙海"
+
+[accounts.ribbon_power_jp]
+region = "日本"
+manager = "古嘉垚"
+
+[manager_monthly_gmv_usd]
+# 示例：按月份填写负责人自行统计的达人端 GMV(USD)
+[manager_monthly_gmv_usd."2026-03"]
+"古嘉垚" = 40910.87
+"刘龙海" = 84294

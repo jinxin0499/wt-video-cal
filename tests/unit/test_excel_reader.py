@@ -6,6 +6,7 @@ from openpyxl import Workbook
 
 from wt_video_cal.__main__ import _check_bound_duplicates
 from wt_video_cal.excel_reader import (
+    _load_rows,
     detect_format,
     read_all_excel_files,
     read_excel_file,
@@ -19,27 +20,78 @@ def _create_chinese_usd_excel(path: Path) -> None:
     wb = Workbook()
     ws = wb.active
     ws.append(["[日期范围]: 2026-01-01 ~ 2026-01-31"])
-    ws.append([
-        "达人昵称", "达人ID", "视频信息", "视频ID", "发布时间", "商品",
-        "VV", "点赞数", "评论数", "分享数", "新增粉丝数", "引流次数",
-        "商品曝光次数", "商品点击次数", "去重客户数",
-        "视频成交订单数", "视频商品成交件数",
-        "GMV（视频） ($)", "GPM ($)", "归因于带货视频的 GMV ($)",
-    ])
-    ws.append([
-        "digital_goodies_us", "7487897838011565102",
-        "video info", "7565630769654140215", "2025/10/26",
-        "4-in-1 Magnetic Power Bank Set",
-        123045, 449, 9, 135, 29, 0, 131635, 4505, 147,
-        155, 164, 2926.18, 23.78, 3030.93,
-    ])
-    ws.append([
-        "qryzhxv", "7573313674392208439",
-        "video info 2", "7595158823183174925", "2026/01/14",
-        "Magnetic Wireless Power Bank 5000mAh",
-        20878, 131, 2, 15, 9, 0, 21471, 972, 15,
-        16, 17, 350.86, 16.81, 396.86,
-    ])
+    ws.append(
+        [
+            "达人昵称",
+            "达人ID",
+            "视频信息",
+            "视频ID",
+            "发布时间",
+            "商品",
+            "VV",
+            "点赞数",
+            "评论数",
+            "分享数",
+            "新增粉丝数",
+            "引流次数",
+            "商品曝光次数",
+            "商品点击次数",
+            "去重客户数",
+            "视频成交订单数",
+            "视频商品成交件数",
+            "GMV（视频） ($)",
+            "GPM ($)",
+            "归因于带货视频的 GMV ($)",
+        ]
+    )
+    ws.append(
+        [
+            "digital_goodies_us",
+            "7487897838011565102",
+            "video info",
+            "7565630769654140215",
+            "2025/10/26",
+            "4-in-1 Magnetic Power Bank Set",
+            123045,
+            449,
+            9,
+            135,
+            29,
+            0,
+            131635,
+            4505,
+            147,
+            155,
+            164,
+            2926.18,
+            23.78,
+            3030.93,
+        ]
+    )
+    ws.append(
+        [
+            "qryzhxv",
+            "7573313674392208439",
+            "video info 2",
+            "7595158823183174925",
+            "2026/01/14",
+            "Magnetic Wireless Power Bank 5000mAh",
+            20878,
+            131,
+            2,
+            15,
+            9,
+            0,
+            21471,
+            972,
+            15,
+            16,
+            17,
+            350.86,
+            16.81,
+            396.86,
+        ]
+    )
     wb.save(path)
 
 
@@ -48,26 +100,78 @@ def _create_english_usd_excel(path: Path) -> None:
     wb = Workbook()
     ws = wb.active
     ws.append(["[Date Range]: 2026-01-01 ~ 2026-01-31"])
-    ws.append([
-        "Creator name", "Creator ID", "Video Info", "Video ID", "Time", "Products",
-        "VV", "Likes", "Comments", "Shares", "New followers", "V-to-L clicks",
-        "Product Impressions", "Product Clicks", "Unique customers",
-        "Orders", "Video items sold",
-        "Gross merchandise value (Video) ($)", "GPM ($)",
-        "Shoppable video attributed GMV ($)",
-    ])
-    ws.append([
-        "user9120702396325", "7543951436285330487",
-        "video info", "7592801730790804791", "2026/01/07",
-        "Magnetic Wireless Power Bank 5000mAh",
-        509, 1, 0, 0, 0, 0, 533, 9, 0, 0, 0, 0, 0, 0,
-    ])
-    ws.append([
-        "user9120702396325", "7543951436285330487",
-        "video info 2", "7592144276021087543", "2026/01/05",
-        "Magnetic Wireless Power Bank 5000mAh",
-        303, 0, 0, 1, 0, 0, 334, 14, 2, 2, 2, 22.72, 74.98, 22.72,
-    ])
+    ws.append(
+        [
+            "Creator name",
+            "Creator ID",
+            "Video Info",
+            "Video ID",
+            "Time",
+            "Products",
+            "VV",
+            "Likes",
+            "Comments",
+            "Shares",
+            "New followers",
+            "V-to-L clicks",
+            "Product Impressions",
+            "Product Clicks",
+            "Unique customers",
+            "Orders",
+            "Video items sold",
+            "Gross merchandise value (Video) ($)",
+            "GPM ($)",
+            "Shoppable video attributed GMV ($)",
+        ]
+    )
+    ws.append(
+        [
+            "user9120702396325",
+            "7543951436285330487",
+            "video info",
+            "7592801730790804791",
+            "2026/01/07",
+            "Magnetic Wireless Power Bank 5000mAh",
+            509,
+            1,
+            0,
+            0,
+            0,
+            0,
+            533,
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ]
+    )
+    ws.append(
+        [
+            "user9120702396325",
+            "7543951436285330487",
+            "video info 2",
+            "7592144276021087543",
+            "2026/01/05",
+            "Magnetic Wireless Power Bank 5000mAh",
+            303,
+            0,
+            0,
+            1,
+            0,
+            0,
+            334,
+            14,
+            2,
+            2,
+            2,
+            22.72,
+            74.98,
+            22.72,
+        ]
+    )
     wb.save(path)
 
 
@@ -76,20 +180,166 @@ def _create_english_gbp_excel(path: Path) -> None:
     wb = Workbook()
     ws = wb.active
     ws.append(["[Date Range]: 2026-02-01 ~ 2026-02-28"])
-    ws.append([
-        "Creator name", "Creator ID", "Video Info", "Video ID", "Time", "Products",
-        "VV", "Likes", "Comments", "Shares", "New followers", "V-to-L clicks",
-        "Product Impressions", "Product Clicks", "Unique customers",
-        "Orders", "Video items sold",
-        "Gross merchandise value (Video) (£)", "GPM (£)",
-        "Shoppable video attributed GMV (£)",
-    ])
-    ws.append([
-        "trendyitemspot", "6779305119785501701",
-        "video info", "7525893900704419074", "2025/07/11",
-        "Upgraded 6-in-1 Magnetic Charging Kit",
-        70612, 89, 7, 41, 6, 0, 57558, 2695, 54, 57, 60, 1248.35, 17.68, 1552.14,
-    ])
+    ws.append(
+        [
+            "Creator name",
+            "Creator ID",
+            "Video Info",
+            "Video ID",
+            "Time",
+            "Products",
+            "VV",
+            "Likes",
+            "Comments",
+            "Shares",
+            "New followers",
+            "V-to-L clicks",
+            "Product Impressions",
+            "Product Clicks",
+            "Unique customers",
+            "Orders",
+            "Video items sold",
+            "Gross merchandise value (Video) (£)",
+            "GPM (£)",
+            "Shoppable video attributed GMV (£)",
+        ]
+    )
+    ws.append(
+        [
+            "trendyitemspot",
+            "6779305119785501701",
+            "video info",
+            "7525893900704419074",
+            "2025/07/11",
+            "Upgraded 6-in-1 Magnetic Charging Kit",
+            70612,
+            89,
+            7,
+            41,
+            6,
+            0,
+            57558,
+            2695,
+            54,
+            57,
+            60,
+            1248.35,
+            17.68,
+            1552.14,
+        ]
+    )
+    wb.save(path)
+
+
+def _create_english_jpy_excel(path: Path) -> None:
+    """创建英文日区格式的测试 Excel。"""
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["[Date Range]: 2026-02-01 ~ 2026-02-28"])
+    ws.append(
+        [
+            "Creator name",
+            "Creator ID",
+            "Video Info",
+            "Video ID",
+            "Time",
+            "Products",
+            "VV",
+            "Likes",
+            "Comments",
+            "Shares",
+            "New followers",
+            "V-to-L clicks",
+            "Product Impressions",
+            "Product Clicks",
+            "Unique customers",
+            "Orders",
+            "Video items sold",
+            "Gross merchandise value (Video) (¥)",
+            "GPM (¥)",
+            "Shoppable video attributed GMV (¥)",
+        ]
+    )
+    ws.append(
+        [
+            "user6594846791525",
+            "7543951436285330487",
+            "video info",
+            "7592144276021087543",
+            "2026/02/05",
+            "Compact Camera",
+            303,
+            0,
+            0,
+            1,
+            0,
+            0,
+            334,
+            14,
+            2,
+            2,
+            2,
+            12000,
+            74.98,
+            10000,
+        ]
+    )
+    wb.save(path)
+
+
+def _create_chinese_jpy_excel(path: Path) -> None:
+    """创建中文日区格式的测试 Excel。"""
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["[日期范围]: 2026-03-01 ~ 2026-03-31"])
+    ws.append(
+        [
+            "达人昵称",
+            "达人ID",
+            "视频信息",
+            "视频ID",
+            "发布时间",
+            "商品",
+            "VV",
+            "点赞数",
+            "评论数",
+            "分享数",
+            "新增粉丝数",
+            "引流次数",
+            "商品曝光次数",
+            "商品点击次数",
+            "去重客户数",
+            "视频成交订单数",
+            "视频商品成交件数",
+            "GMV（视频） (円)",
+            "GPM (円)",
+            "归因于带货视频的 GMV (円)",
+        ]
+    )
+    ws.append(
+        [
+            "ayachan0122",
+            "6508955501907197953",
+            "video info",
+            "7620052282473762066",
+            "2026/03/22 21:14:43",
+            "5000mAh モバイルバッテリー",
+            185580,
+            668,
+            14,
+            36,
+            39,
+            0,
+            197722,
+            7370,
+            43,
+            50,
+            51,
+            101772,
+            548,
+            103862,
+        ]
+    )
     wb.save(path)
 
 
@@ -98,19 +348,39 @@ class TestDetectFormat:
         headers = ["达人昵称", "达人ID", "视频ID", "商品", "归因于带货视频的 GMV ($)"]
         assert detect_format(headers) == ExcelFormat.CHINESE_USD
 
+    def test_chinese_jpy(self) -> None:
+        headers = ["达人昵称", "达人ID", "视频ID", "商品", "归因于带货视频的 GMV (円)"]
+        assert detect_format(headers) == ExcelFormat.CHINESE_JPY
+
     def test_english_usd(self) -> None:
         headers = [
-            "Creator name", "Creator ID", "Video ID", "Products",
+            "Creator name",
+            "Creator ID",
+            "Video ID",
+            "Products",
             "Shoppable video attributed GMV ($)",
         ]
         assert detect_format(headers) == ExcelFormat.ENGLISH_USD
 
     def test_english_gbp(self) -> None:
         headers = [
-            "Creator name", "Creator ID", "Video ID", "Products",
+            "Creator name",
+            "Creator ID",
+            "Video ID",
+            "Products",
             "Shoppable video attributed GMV (£)",
         ]
         assert detect_format(headers) == ExcelFormat.ENGLISH_GBP
+
+    def test_english_jpy(self) -> None:
+        headers = [
+            "Creator name",
+            "Creator ID",
+            "Video ID",
+            "Products",
+            "Shoppable video attributed GMV (¥)",
+        ]
+        assert detect_format(headers) == ExcelFormat.ENGLISH_JPY
 
     def test_unknown_format(self) -> None:
         with pytest.raises(UnknownFormatError):
@@ -118,6 +388,47 @@ class TestDetectFormat:
 
 
 class TestReadExcelFile:
+    def test_load_rows_falls_back_without_size_threshold(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        path = tmp_path / "small_inline.xlsx"
+
+        class FakeSheet:
+            def __init__(self, rows: list[tuple[object, ...]]) -> None:
+                self._rows = rows
+
+            def iter_rows(self, values_only: bool = True):
+                assert values_only is True
+                return iter(self._rows)
+
+        class FakeWorkbook:
+            def __init__(self, rows: list[tuple[object, ...]]) -> None:
+                self.active = FakeSheet(rows)
+
+            def close(self) -> None:
+                pass
+
+        read_only_rows = [("[日期范围]: 2026-03-01 ~ 2026-03-31",)]
+        normal_rows = [
+            ("[日期范围]: 2026-03-01 ~ 2026-03-31",),
+            tuple(),
+            ("达人昵称", "视频ID", "商品"),
+            ("user7910470860785", "v1", "Product"),
+        ]
+        calls: list[bool] = []
+
+        def fake_load_workbook(_path: Path, *, read_only: bool, data_only: bool):
+            assert data_only is True
+            calls.append(read_only)
+            return FakeWorkbook(read_only_rows if read_only else normal_rows)
+
+        monkeypatch.setattr("wt_video_cal.excel_reader.load_workbook", fake_load_workbook)
+
+        rows = _load_rows(path)
+
+        assert rows == normal_rows
+        assert calls == [True, False]
+
     def test_read_chinese_usd(self, tmp_path: Path) -> None:
         f = tmp_path / "chinese.xlsx"
         _create_chinese_usd_excel(f)
@@ -125,6 +436,7 @@ class TestReadExcelFile:
         assert len(records) == 2
         assert records[0].creator_name == "digital_goodies_us"
         assert records[0].video_id == "7565630769654140215"
+        assert records[0].video_gmv == Decimal("2926.18")
         assert records[0].attributed_gmv == Decimal("3030.93")
         assert records[0].currency == Currency.USD
         assert records[0].orders == 155
@@ -137,6 +449,7 @@ class TestReadExcelFile:
         assert len(records) == 2
         assert records[0].creator_name == "user9120702396325"
         assert records[0].currency == Currency.USD
+        assert records[1].video_gmv == Decimal("22.72")
         assert records[1].attributed_gmv == Decimal("22.72")
 
     def test_read_english_gbp(self, tmp_path: Path) -> None:
@@ -146,7 +459,28 @@ class TestReadExcelFile:
         assert len(records) == 1
         assert records[0].creator_name == "trendyitemspot"
         assert records[0].currency == Currency.GBP
+        assert records[0].video_gmv == Decimal("1248.35")
         assert records[0].attributed_gmv == Decimal("1552.14")
+
+    def test_read_english_jpy(self, tmp_path: Path) -> None:
+        f = tmp_path / "english_jp.xlsx"
+        _create_english_jpy_excel(f)
+        records = read_excel_file(f)
+        assert len(records) == 1
+        assert records[0].creator_name == "user6594846791525"
+        assert records[0].currency == Currency.JPY
+        assert records[0].video_gmv == Decimal("12000")
+        assert records[0].attributed_gmv == Decimal("10000")
+
+    def test_read_chinese_jpy(self, tmp_path: Path) -> None:
+        f = tmp_path / "chinese_jp.xlsx"
+        _create_chinese_jpy_excel(f)
+        records = read_excel_file(f)
+        assert len(records) == 1
+        assert records[0].creator_name == "ayachan0122"
+        assert records[0].currency == Currency.JPY
+        assert records[0].video_gmv == Decimal("101772")
+        assert records[0].attributed_gmv == Decimal("103862")
 
     def test_header_with_empty_rows(self, tmp_path: Path) -> None:
         """真实 Excel: 第1行=日期, 第2行=空, 第3行=表头, 第4行起=数据。"""
@@ -155,20 +489,54 @@ class TestReadExcelFile:
         ws = wb.active
         ws.append(["[日期范围]: 2026-01-01 ~ 2026-01-31"])
         ws.append([])  # 空行
-        ws.append([
-            "达人昵称", "达人ID", "视频信息", "视频ID", "发布时间", "商品",
-            "VV", "点赞数", "评论数", "分享数", "新增粉丝数", "引流次数",
-            "商品曝光次数", "商品点击次数", "去重客户数",
-            "视频成交订单数", "视频商品成交件数",
-            "GMV（视频） ($)", "GPM ($)", "归因于带货视频的 GMV ($)",
-        ])
-        ws.append([
-            "digital_goodies_us", "7487897838011565102",
-            "video info", "7565630769654140215", "2025/10/26",
-            "4-in-1 Magnetic Power Bank Set",
-            123045, 449, 9, 135, 29, 0, 131635, 4505, 147,
-            155, 164, 2926.18, 23.78, 3030.93,
-        ])
+        ws.append(
+            [
+                "达人昵称",
+                "达人ID",
+                "视频信息",
+                "视频ID",
+                "发布时间",
+                "商品",
+                "VV",
+                "点赞数",
+                "评论数",
+                "分享数",
+                "新增粉丝数",
+                "引流次数",
+                "商品曝光次数",
+                "商品点击次数",
+                "去重客户数",
+                "视频成交订单数",
+                "视频商品成交件数",
+                "GMV（视频） ($)",
+                "GPM ($)",
+                "归因于带货视频的 GMV ($)",
+            ]
+        )
+        ws.append(
+            [
+                "digital_goodies_us",
+                "7487897838011565102",
+                "video info",
+                "7565630769654140215",
+                "2025/10/26",
+                "4-in-1 Magnetic Power Bank Set",
+                123045,
+                449,
+                9,
+                135,
+                29,
+                0,
+                131635,
+                4505,
+                147,
+                155,
+                164,
+                2926.18,
+                23.78,
+                3030.93,
+            ]
+        )
         wb.save(f)
         records = read_excel_file(f)
         assert len(records) == 1
@@ -183,20 +551,54 @@ class TestReadExcelFile:
         ws.append(["[Date Range]: 2026-01-01 ~ 2026-01-31"])
         ws.append([])
         ws.append([])
-        ws.append([
-            "Creator name", "Creator ID", "Video Info", "Video ID", "Time", "Products",
-            "VV", "Likes", "Comments", "Shares", "New followers", "V-to-L clicks",
-            "Product Impressions", "Product Clicks", "Unique customers",
-            "Orders", "Video items sold",
-            "Gross merchandise value (Video) ($)", "GPM ($)",
-            "Shoppable video attributed GMV ($)",
-        ])
-        ws.append([
-            "user9120702396325", "7543951436285330487",
-            "video info", "7592144276021087543", "2026/01/05",
-            "Magnetic Wireless Power Bank 5000mAh",
-            303, 0, 0, 1, 0, 0, 334, 14, 2, 2, 2, 22.72, 74.98, 22.72,
-        ])
+        ws.append(
+            [
+                "Creator name",
+                "Creator ID",
+                "Video Info",
+                "Video ID",
+                "Time",
+                "Products",
+                "VV",
+                "Likes",
+                "Comments",
+                "Shares",
+                "New followers",
+                "V-to-L clicks",
+                "Product Impressions",
+                "Product Clicks",
+                "Unique customers",
+                "Orders",
+                "Video items sold",
+                "Gross merchandise value (Video) ($)",
+                "GPM ($)",
+                "Shoppable video attributed GMV ($)",
+            ]
+        )
+        ws.append(
+            [
+                "user9120702396325",
+                "7543951436285330487",
+                "video info",
+                "7592144276021087543",
+                "2026/01/05",
+                "Magnetic Wireless Power Bank 5000mAh",
+                303,
+                0,
+                0,
+                1,
+                0,
+                0,
+                334,
+                14,
+                2,
+                2,
+                2,
+                22.72,
+                74.98,
+                22.72,
+            ]
+        )
         wb.save(f)
         records = read_excel_file(f)
         assert len(records) == 1
@@ -220,13 +622,23 @@ class TestReadExcelFile:
         with pytest.raises(UnknownFormatError):
             read_excel_file(f)
 
+    def test_date_only_export_returns_empty_records(self, tmp_path: Path) -> None:
+        f = tmp_path / "date_only.xlsx"
+        wb = Workbook()
+        ws = wb.active
+        ws.append(["[日期范围]: 2026-03-01 ~ 2026-03-31"])
+        wb.save(f)
+        assert read_excel_file(f) == []
+
 
 class TestReadAllExcelFiles:
     def test_read_multiple_files(self, tmp_path: Path) -> None:
         _create_chinese_usd_excel(tmp_path / "file1.xlsx")
         _create_english_gbp_excel(tmp_path / "file2.xlsx")
+        _create_english_jpy_excel(tmp_path / "file3.xlsx")
+        _create_chinese_jpy_excel(tmp_path / "file4.xlsx")
         records = read_all_excel_files(tmp_path)
-        assert len(records) == 3  # 2 from chinese + 1 from gbp
+        assert len(records) == 5  # 2 from chinese + 1 from gbp + 2 from jpy
 
     def test_skip_temp_files(self, tmp_path: Path) -> None:
         _create_chinese_usd_excel(tmp_path / "data.xlsx")
